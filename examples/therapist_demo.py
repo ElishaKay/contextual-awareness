@@ -1,4 +1,6 @@
 # therapist_demo.py
+from dotenv import load_dotenv
+load_dotenv()
 from core.pipeline import TCAPipeline
 from memory.langraph_adapter import LangGraphMemoryAdapter
 

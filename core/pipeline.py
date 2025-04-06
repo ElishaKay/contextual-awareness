@@ -20,9 +20,16 @@ class TCAPipeline:
         analysis = self.meaning_engine.analyze(user_input)
         pattern = self.pattern_tracker.track(self.turns, analysis)
         updated_state = self.memory_core.update(analysis, pattern)
-        response = self.response_engine.decide(analysis, updated_state)
+        
+        # Build the conversation history from the previous turns
+        conversation_history = self.turns[:]  # Make a copy of existing conversation history.
+        conversation_history.append({"user": user_input, "bot": ""})  # Append the current user input.
+        
+        response = self.response_engine.decide(analysis, updated_state, conversation_history)
+        
         self.memory_core.append_turn(user_input, response["response"])
         self.turns.append({"user": user_input, "bot": response["response"]})
+        
         return response
 
     def to_dict(self):

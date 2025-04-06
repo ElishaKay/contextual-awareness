@@ -4,17 +4,32 @@
       "emotion_trends": [
         "anxious",
         "overwhelmed",
-        "overwhelmed"
+        "overwhelmed",
+        "neutral",
+        "indifference",
+        "curiosity",
+        "dislike",
+        "curiosity"
       ],
       "intents": [
         "emotional_disclosure",
         "emotional_disclosure",
-        "emotional_disclosure"
+        "emotional_disclosure",
+        "greeting",
+        "emotional_disclosure",
+        "seeking_information",
+        "emotional_disclosure",
+        "seeking_information"
       ],
       "topics": [
         "personal struggle",
         "personal struggle",
-        "personal struggle"
+        "personal struggle",
+        "none",
+        "general mood",
+        "personal_information",
+        "phobia",
+        "self-awareness"
       ],
       "turns": [
         {
@@ -28,6 +43,26 @@
         {
           "user": "I'm elisha",
           "bot": "I'm here and listening\u2014tell me more about what\u2019s going on."
+        },
+        {
+          "user": "sup",
+          "bot": "Hi Elisha, it's good to hear from you again. How have you been feeling lately? If there's anything on your mind, I'm here to listen and help."
+        },
+        {
+          "user": "feeling so so",
+          "bot": "Thank you for sharing, Elisha. It sounds like you're feeling a bit indifferent or in between at the moment. It's completely okay to have days like this. If there's anything specific that's contributing to this feeling, or if you'd like to explore it further, I'm here to listen and support you. Sometimes talking about it can help bring clarity or relief."
+        },
+        {
+          "user": "what do you know about me?",
+          "bot": "Hi Elisha, I remember that we've had a few conversations where you've shared feeling a bit overwhelmed and indifferent at times. You've mentioned feeling \"so so\" recently, and it seems like you're navigating some personal struggles. I'm here to support you, and any details you choose to share help me understand you better and offer more meaningful support. If there's anything specific you'd like to talk about or any questions you have, I'm here to listen."
+        },
+        {
+          "user": "i dont like snakes",
+          "bot": "Thank you for sharing that with me, Elisha. It sounds like snakes might be something that makes you uncomfortable or that you have a strong dislike for. It's completely normal to have certain animals or things that we don't like or that might trigger a fear. If you feel like there's more to this feeling that you'd like to explore, or if there's a specific experience with snakes that you'd like to talk about, I'm here to listen and support you. Your feelings are valid, and understanding them better can sometimes help in processing any discomfort or fear."
+        },
+        {
+          "user": "what do you know about me?",
+          "bot": "Hi Elisha, from our past conversations, I understand that you're navigating through some personal struggles and have shared feelings of being overwhelmed and indifferent at times. You've also expressed a strong dislike for snakes. It's completely normal to have such feelings and preferences, and I'm here to support you through any challenges you might be facing. If there's anything specific you'd like to discuss or explore, I'm always here to listen and help you in any way I can. Your thoughts and feelings are important, and I'm here to provide a space where you can talk about whatever's on your mind."
         }
       ]
     },
@@ -43,6 +78,26 @@
       {
         "user": "I'm elisha",
         "bot": "I'm here and listening\u2014tell me more about what\u2019s going on."
+      },
+      {
+        "user": "sup",
+        "bot": "Hi Elisha, it's good to hear from you again. How have you been feeling lately? If there's anything on your mind, I'm here to listen and help."
+      },
+      {
+        "user": "feeling so so",
+        "bot": "Thank you for sharing, Elisha. It sounds like you're feeling a bit indifferent or in between at the moment. It's completely okay to have days like this. If there's anything specific that's contributing to this feeling, or if you'd like to explore it further, I'm here to listen and support you. Sometimes talking about it can help bring clarity or relief."
+      },
+      {
+        "user": "what do you know about me?",
+        "bot": "Hi Elisha, I remember that we've had a few conversations where you've shared feeling a bit overwhelmed and indifferent at times. You've mentioned feeling \"so so\" recently, and it seems like you're navigating some personal struggles. I'm here to support you, and any details you choose to share help me understand you better and offer more meaningful support. If there's anything specific you'd like to talk about or any questions you have, I'm here to listen."
+      },
+      {
+        "user": "i dont like snakes",
+        "bot": "Thank you for sharing that with me, Elisha. It sounds like snakes might be something that makes you uncomfortable or that you have a strong dislike for. It's completely normal to have certain animals or things that we don't like or that might trigger a fear. If you feel like there's more to this feeling that you'd like to explore, or if there's a specific experience with snakes that you'd like to talk about, I'm here to listen and support you. Your feelings are valid, and understanding them better can sometimes help in processing any discomfort or fear."
+      },
+      {
+        "user": "what do you know about me?",
+        "bot": "Hi Elisha, from our past conversations, I understand that you're navigating through some personal struggles and have shared feelings of being overwhelmed and indifferent at times. You've also expressed a strong dislike for snakes. It's completely normal to have such feelings and preferences, and I'm here to support you through any challenges you might be facing. If there's anything specific you'd like to discuss or explore, I'm always here to listen and help you in any way I can. Your thoughts and feelings are important, and I'm here to provide a space where you can talk about whatever's on your mind."
       }
     ]
   }
