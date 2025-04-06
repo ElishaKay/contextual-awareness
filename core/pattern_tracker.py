@@ -56,13 +56,13 @@ class PatternShiftTracker:
                 response_content = llm_response.content
                 
                 # Print the raw response for debugging
-                print(f"Raw LLM response: {response_content}")
+                # print(f"Raw LLM response: {response_content}")
                 
                 # Try to extract JSON from the response if it's not pure JSON
                 json_match = re.search(r'\{.*\}', response_content, re.DOTALL)
                 if json_match:
                     json_str = json_match.group(0)
-                    print(f"Extracted JSON: {json_str}")
+                    # print(f"Extracted JSON: {json_str}")
                     result = json.loads(json_str)
                 else:
                     # If no JSON found, create a default response
