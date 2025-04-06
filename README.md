@@ -1,34 +1,96 @@
+# Contextual Awareness Framework (CAF)
 
-```bash
+A modular, multi-domain pipeline built on LangGraph-style persistence and Temporal Context Awareness (TCA) for adaptive, memory-enhanced AI applications.
+
+Supports:
+- 🧠 Personalized therapist conversations
+- 🔐 Security prompt monitoring and risk analysis
+
+---
+
+## 🗂️ Project Structure
+```
 contextual-awareness-framework/
-│
-├── core/                       # Core pipeline logic
-│   ├── meaning_engine.py       # Intent, emotion, tone analysis
-│   ├── pattern_tracker.py      # Detects behavioral or emotional shifts
-│   ├── memory_core.py          # Session-level short-term memory
-│   ├── response_engine.py      # Decides how to respond based on context
-│   └── pipeline.py             # Wires it all together
-│
-├── memory/                     # Persistent storage logic
-│   ├── langgraph_adapter.py    # Interfaces with LangGraph memory backend
-│   ├── memory_store.py         # CRUD operations for memory documents
-│   └── schemas.py              # JSON schema for stored memories
-│
-├── plugins/                    # Domain-specific logic
-│   ├── therapist/              
-│   │   └── plugin.py           # Emotion and goal detection
-│   ├── security/
-│   │   └── plugin.py           # Risk scoring and prompt monitoring
-│   └── __init__.py
-│
-├── examples/                   # Sample pipelines and conversation demos
-│   ├── therapist_demo.py
-│   ├── security_demo.py
-│   └── walkthrough.ipynb
-│
-├── tests/                      # Unit and integration tests
-│
+├── core/               # Core logic: meaning, memory, response, pipeline
+├── memory/             # Long-term memory adapters + checkpointing
+├── plugins/            # Personality-specific analyzers (therapist, security)
+├── examples/           # Interactive demos
+├── tests/              # Unit and integration tests
 ├── README.md
 └── requirements.txt
 ```
+
+---
+
+## 🧬 Core Components
+### Core Logic (`core/`)
+- `meaning_engine.py` – Interprets user intent, emotion, tone
+- `pattern_tracker.py` – Detects behavioral/emotional drift
+- `memory_core.py` – Session-level short-term memory
+- `response_engine.py` – Crafts adaptive replies
+- `pipeline.py` – Chains all components into a processing flow
+
+### LangGraph Integration (`memory/`)
+- `langgraph_adapter.py` – Persists state using LangGraph-compatible checkpoint format
+- `memory_store.py` – File-based memory store
+- `schemas.py` – Schema definitions for validation or structure
+
+### Plugins (`plugins/`)
+- `therapist/plugin.py` – Emotion, intent, and goal detection
+- `security/plugin.py` – Prompt risk analysis and intent classification
+
+---
+
+## 🚀 Getting Started
+### Install Requirements
+```bash
+pip install -r requirements.txt
+```
+
+### Run Therapist CLI Demo
+```bash
+python examples/therapist_demo.py
+```
+
+### Build Fullstack App
+This repo includes a `Flask` backend and React frontend (see separate frontend folder). They communicate over `/chat` with JSON payloads:
+```json
+{
+  "user_id": "123",
+  "message": "I'm feeling stuck lately",
+  "mode": "therapist"
+}
+```
+
+---
+
+## 📚 Use Cases
+### 🧠 Therapist Mode
+- Detect fatigue, anxiety, low self-worth
+- Offer comfort, reflection, or motivation based on evolving state
+
+### 🔐 Security Mode
+- Detect jailbreak or unsafe prompts
+- Respond with warning, denial, or neutral confirmation
+
+---
+
+## 🧪 Testing
+To be added under the `tests/` folder. Suggested:
+- Plugin unit tests
+- Memory checkpoint integration tests
+- Response behavior under multiple turns
+
+---
+
+## 💡 Inspiration
+- [LangGraph long-term memory](https://blog.langchain.dev/launching-long-term-memory-support-in-langgraph/)
+- [TCA paper: Multi-Turn Manipulation Defense](https://arxiv.org/abs/2503.15560)
+
+---
+
+## 🤝 Contributing
+Want to add a new plugin (e.g. marketing assistant)? Just add a `plugins/marketing/plugin.py` and register it in `meaning_engine.py`.
+
+PRs and feedback welcome!
 
