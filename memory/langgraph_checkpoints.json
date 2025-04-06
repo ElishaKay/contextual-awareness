@@ -1,0 +1,49 @@
+{
+  "demo_user": {
+    "session_memory": {
+      "emotion_trends": [
+        "anxious",
+        "overwhelmed",
+        "overwhelmed"
+      ],
+      "intents": [
+        "emotional_disclosure",
+        "emotional_disclosure",
+        "emotional_disclosure"
+      ],
+      "topics": [
+        "personal struggle",
+        "personal struggle",
+        "personal struggle"
+      ],
+      "turns": [
+        {
+          "user": "sup",
+          "bot": "I'm here and listening\u2014tell me more about what\u2019s going on."
+        },
+        {
+          "user": "what do you know about me",
+          "bot": "I'm here and listening\u2014tell me more about what\u2019s going on."
+        },
+        {
+          "user": "I'm elisha",
+          "bot": "I'm here and listening\u2014tell me more about what\u2019s going on."
+        }
+      ]
+    },
+    "turns": [
+      {
+        "user": "sup",
+        "bot": "I'm here and listening\u2014tell me more about what\u2019s going on."
+      },
+      {
+        "user": "what do you know about me",
+        "bot": "I'm here and listening\u2014tell me more about what\u2019s going on."
+      },
+      {
+        "user": "I'm elisha",
+        "bot": "I'm here and listening\u2014tell me more about what\u2019s going on."
+      }
+    ]
+  }
+}

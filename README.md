@@ -49,7 +49,7 @@ pip install -r requirements.txt
 
 ### Run Therapist CLI Demo
 ```bash
-python examples/therapist_demo.py
+python -m examples.therapist_demo
 ```
 
 ### Build Fullstack App

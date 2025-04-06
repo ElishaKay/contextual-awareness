@@ -1,6 +1,6 @@
 # therapist_demo.py
 from core.pipeline import TCAPipeline
-from memory.langgraph_adapter import LangGraphMemoryAdapter
+from memory.langraph_adapter import LangGraphMemoryAdapter
 
 user_id = "demo_user"
 
