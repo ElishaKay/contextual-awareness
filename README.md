@@ -52,14 +52,9 @@ pip install -r requirements.txt
 python -m examples.therapist_demo
 ```
 
-### Build Fullstack App
-This repo includes a `Flask` backend and React frontend (see separate frontend folder). They communicate over `/chat` with JSON payloads:
-```json
-{
-  "user_id": "123",
-  "message": "I'm feeling stuck lately",
-  "mode": "therapist"
-}
+### Run Security CLI Demo
+```bash
+python -m examples.security_demo
 ```
 
 ---
