@@ -1,3 +1,5 @@
+
+```bash
 contextual-awareness-framework/
 │
 ├── core/                       # Core pipeline logic
@@ -28,5 +30,5 @@ contextual-awareness-framework/
 │
 ├── README.md
 └── requirements.txt
-
+```
 
