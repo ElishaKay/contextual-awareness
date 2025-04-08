@@ -3,4 +3,7 @@ langchain-core
 langchain-community
 langchain-openai
 trustcall
+
+# gptr mongo flow
 gpt_researcher
+pymongo
