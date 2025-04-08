@@ -99,7 +99,7 @@ To be added under the `tests/` folder. Suggested:
 
 ## 💡 Inspiration
 - [LangGraph long-term memory](https://blog.langchain.dev/launching-long-term-memory-support-in-langgraph/)
-- [TCA paper: Multi-Turn Manipulation Defense](https://arxiv.org/abs/2503.15560)
+- [TCA paper: Multi-Turn Manipulation Defense](https://arxiv.org/abs/2503.15560) by Prashant Kulkarni & Assaf Namer
 
 ---
 
