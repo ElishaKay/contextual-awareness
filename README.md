@@ -75,6 +75,7 @@ python -m examples.mongo_flow
 ```
 
 Note: this will also work for any other [GPTR-Supported Search Engine](https://docs.gptr.dev/docs/gpt-researcher/search-engines/retrievers) & [GPTR-Supported report customization](https://docs.gptr.dev/docs/gpt-researcher/context/tailored-research)
+
 ---
 
 ## 📚 Use Cases
