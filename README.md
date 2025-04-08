@@ -57,6 +57,24 @@ python -m examples.therapist_demo
 python -m examples.security_demo
 ```
 
+### Run the GPTR-MongoDB Flow
+
+To run the GPTR-MongoDB flow:
+
+Step 1: Add 2 environment variables:  
+
+```bash
+MONGO_URI=mongodb+srv://...
+TAVILY_API_KEY=1234567890
+```
+
+Step 2: Run in the CLI:
+
+```bash
+python -m examples.mongo_flow
+```
+
+Note: this will also work for any other [GPTR-Supported Search Engine](https://docs.gptr.dev/docs/gpt-researcher/search-engines/retrievers) & [GPTR-Supported report customization](https://docs.gptr.dev/docs/gpt-researcher/context/tailored-research)
 ---
 
 ## 📚 Use Cases
