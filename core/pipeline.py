@@ -3,12 +3,14 @@ import os
 import json
 import logging
 from pymongo import MongoClient
-from bson import ObjectId  # Import ObjectId if needed
+
+# Import our new personalization module
+from core.personalization_context import fetch_personalization_context, save_personalization_context
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Suppress external libraries' logs.
+# Reduce log spam from external libraries.
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -17,6 +19,9 @@ logging.getLogger("pymongo").setLevel(logging.WARNING)
 
 class TCAPipeline:
     def __init__(self, mode="therapist", session_id="default-user"):
+        """
+        Initialize core modules as before, but also store the session id.
+        """
         from core.memory_core import TemporalMemoryCore
         from core.meaning_engine import ContextualMeaningEngine
         from core.pattern_tracker import PatternShiftTracker
@@ -28,78 +33,70 @@ class TCAPipeline:
         self.meaning_engine = ContextualMeaningEngine(mode)
         self.pattern_tracker = PatternShiftTracker()
         self.response_engine = AdaptiveResponseEngine(mode)
-        self.turns = []  # Conversation history
-        self.components = {}  # Extra components state
+        self.turns = []  # Conversation history.
+        self.components = {}
 
     def load(self, checkpoint_state: dict):
         """
         Load the pipeline state from a checkpoint dictionary.
-        Converts any ObjectId elements to strings to ensure JSON serialization works.
+        Converts any MongoDB ObjectId elements using default=str for JSON serialization.
         """
         self.memory_core.load(checkpoint_state.get("session_memory", {}))
         self.turns = checkpoint_state.get("turns", [])
         self.components = checkpoint_state.get("components", {})
-
-        # Use default=str in json.dumps to automatically convert non-serializable types 
         logger.debug("Loaded checkpoint state: %s", 
                      json.dumps(checkpoint_state, indent=2, default=str))
 
     def load_personalization_context(self) -> dict:
         """
-        Load personalization information from MongoDB.
-        This includes the user profile, todos, instructions, and research goals.
+        Delegate fetching of personalization context to the new module.
         """
-        mongo_uri = os.environ.get("MONGO_URI")
-        if not mongo_uri:
-            logger.warning("MONGO_URI not set, skipping personalization context.")
-            return {}
-        client = MongoClient(mongo_uri)
-        db = client["gptr_db"]
-        session_id = self.session_id
-
-        # Retrieve personalization data.
-        profile = db["profile"].find_one({"user_id": session_id})
-        todos = list(db["todos"].find({"user_id": session_id}))
-        instructions_doc = db["instructions"].find_one({"user_id": session_id})
-        research_goals_doc = db["research_goals"].find_one({"user_id": session_id})
-
-        personalization_context = {
-            "profile": profile if profile else {},
-            "todos": todos,
-            "instructions": instructions_doc.get("content") if instructions_doc else "",
-            "research_goals": research_goals_doc.get("goals") if research_goals_doc else ""
-        }
-        logger.debug("Personalization context loaded: %s", json.dumps(personalization_context, indent=2, default=str))
+        personalization_context = fetch_personalization_context(self.session_id)
+        logger.debug("Personalization context loaded: %s", 
+                     json.dumps(personalization_context, indent=2, default=str))
         return personalization_context
 
     def process(self, user_input: str) -> dict:
         """
         Process a single user input through various stages:
-          - Analysis via Meaning Engine,
-          - Pattern tracking,
-          - Updating memory,
-          - Response generation.
-        Personalization context is injected before generating a response.
+          - Analyze via the Meaning Engine.
+          - Track conversation patterns.
+          - Update memory.
+          - Optionally update personalization context if the user is saving data.
+          - Generate a response augmented with personalization context.
+          - Update conversation history.
         """
-        # Step 1: Analyze the input using the Meaning Engine.
+        # Step 1: Analyze user input.
         analysis = self.meaning_engine.analyze(user_input)
         logger.debug("Analysis: %s", json.dumps({"meaning_engine_analysis": analysis}, indent=2, default=str))
         
-        # Step 2: Track any shifts in conversation context.
+        # Step 2: Track changes in conversation pattern.
         pattern = self.pattern_tracker.track(self.turns, analysis)
         logger.debug("Pattern tracking result: %s", json.dumps({"pattern_tracker_result": pattern}, indent=2, default=str))
         
         # Step 3: Update memory with analysis details.
         self.memory_core.update(analysis, pattern)
         
-        # Step 4: Load personalization context from MongoDB.
+        # --- New Hook: Check if the user intends to update their profile ---
+        # For example: "save in my profile that I like coding and chillig on the beach"
+        if "save in my profile" in user_input.lower():
+            lower_input = user_input.lower()
+            if "that" in lower_input:
+                # Extract text following "that"
+                _, _, info_to_save = lower_input.partition("that")
+                info_to_save = info_to_save.strip()
+                if info_to_save:
+                    save_personalization_context(self.session_id, "profile", info_to_save)
+                    logger.debug("Saved profile info: %s", info_to_save)
+        
+        # Step 4: Load personalization context via our dedicated module.
         personalization_context = self.load_personalization_context()
 
         # Step 5: Build conversation history.
         conversation_history = self.turns[:]  # Shallow copy.
         conversation_history.append({"user": user_input, "bot": ""})
         
-        # Step 6: Create augmented analysis including personalization details.
+        # Step 6: Augment analysis with the personalization context.
         augmented_analysis = analysis.copy()
         augmented_analysis["personalization_context"] = personalization_context
 
@@ -108,11 +105,10 @@ class TCAPipeline:
                                                conversation_history)
         logger.debug("Adaptive response: %s", json.dumps({"adaptive_response": response}, indent=2, default=str))
         
-        # Step 7: Update persistent memory and conversation turns.
+        # Step 7: Update persistent memory and conversation history.
         self.memory_core.append_turn(user_input, response.get("response"))
         self.turns.append({"user": user_input, "bot": response.get("response")})
         
-        # Update components with extra information if needed.
         self.components = {
             "last_analysis": analysis,
             "pattern": pattern,

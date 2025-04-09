@@ -1,26 +1,28 @@
 """
 File: examples/mongo_chat.py
 
-This demo now illustrates using MongoDB persistence for chat history,
-a MongoDB-backed vector store, and enhanced personalization logic -
-incorporating user research goals, conversation history, user profile,
-todo list, and instructions.
+This demo illustrates using MongoDB persistence for chat history and enhanced
+personalization logic. Personalization context is both fetched and updated via
+the core/personalization_context module.
+
 Before running, set these environment variables (via your shell or .env file):
     USE_MONGO=true
     MONGO_URI=<your MongoDB connection string>
-    USER_ID=<a unique user id>
+    USER_ID=<a unique user id (can be null)>
+    (Optional) SESSION_ID – if not provided, one will be generated.
 """
 
 import os
-import asyncio
+import uuid
 
 from core.pipeline import TCAPipeline
 from memory.chats.chats import load_chat_history, save_chat_history
 from memory.vectorstore.vectorstore import load_vector_store
 
 def main():
-    # Get session id and whether to use Mongo-based persistence.
-    session_id = os.environ.get("USER_ID", "default-user")
+    # Create (or retrieve) a session_id.
+    session_id = os.environ.get("SESSION_ID", str(uuid.uuid4()))
+    # USER_ID is not used directly in chat saving now (it may be stored within the personalization DB documents)
     use_mongo = os.environ.get("USE_MONGO", "false").lower() == "true"
 
     if use_mongo:
@@ -30,8 +32,7 @@ def main():
         print("Using default in-memory persistence for chat history.")
         chat_state = {"session_memory": {}, "turns": [], "components": {}}
 
-    # Initialize the pipeline.
-    # Note: Pass the session_id to allow personalization context loading.
+    # Initialize the pipeline (providing the session_id so personalization functions work).
     pipeline = TCAPipeline(mode="therapist", session_id=session_id)
     pipeline.load(chat_state)
 
@@ -45,7 +46,7 @@ def main():
         if user_input.lower() in ("exit", "quit"):
             break
 
-        # Process the user input via the pipeline (which now injects personalization context).
+        # Process user input via the pipeline.
         response = pipeline.process(user_input)
         print("Bot:", response.get("response"))
 
