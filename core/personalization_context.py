@@ -1,14 +1,12 @@
 """
 Module: core/personalization_context.py
 
-This module handles all operations related to fetching and saving a user’s
-personalization context. In our schema, we manage the following collections:
-    - "profile"        (stores a simple profile/info document keyed by user_id)
-    - "todos"          (stores one todo per record keyed by user_id)
+This module handles operations for fetching and saving a user’s personalization context.
+It works with the following collections:
+    - "profile"        (stores a document keyed by user_id)
+    - "todos"          (stores individual todo records keyed by user_id)
     - "instructions"   (stores a document with a "content" field, keyed by user_id)
     - "research_goals" (stores a document with a "goals" field, keyed by user_id)
-    
-Each document includes a created_at field (and updated_at for updates).
 """
 
 import os
@@ -24,17 +22,20 @@ def _get_mongo_db():
 
 def fetch_personalization_context(session_id: str) -> dict:
     """
-    Retrieves personalization context from MongoDB for a given session_id.
-    Looks up the profile, todos, instructions, and research_goals.
+    Retrieve the personalization context from MongoDB for a given session_id.
+    Returns a dictionary with keys: "profile", "todos", "instructions", "research_goals".
     """
     db = _get_mongo_db()
-    profile = db["profile"].find_one({"user_id": session_id})
+    profile_doc = db["profile"].find_one({"user_id": session_id})
+    # Return profile_doc as a dict if found; otherwise, an empty dict.
+    profile = profile_doc if profile_doc and isinstance(profile_doc, dict) else {}
+    
     todos = list(db["todos"].find({"user_id": session_id}))
     instructions_doc = db["instructions"].find_one({"user_id": session_id})
     research_goals_doc = db["research_goals"].find_one({"user_id": session_id})
     
     context = {
-        "profile": profile if profile else {},
+        "profile": profile,
         "todos": todos,
         "instructions": instructions_doc.get("content") if instructions_doc else "",
         "research_goals": research_goals_doc.get("goals") if research_goals_doc else ""
@@ -43,17 +44,15 @@ def fetch_personalization_context(session_id: str) -> dict:
 
 def save_personalization_context(session_id: str, field: str, value: str):
     """
-    Saves (or updates) a personalization field for the given session_id.
-    
+    Save (or update) a personalization field for the given session_id.
+
     Allowed fields:
-      - "profile":      a string containing user's profile info.
-      - "instructions": a string to be saved in the instructions collection.
-      - "research_goals": a string to be saved in the research_goals collection.
-      - "todos":        a todo item (each todo is a separate record).
-    
-    For "profile", "instructions", and "research_goals", the document is upserted.
-    For "todos", a new record is inserted.
-    Each record includes a created_at (and updated_at on update) field.
+      - "profile":       A string containing user's profile info.
+      - "instructions":  A string for the instructions collection.
+      - "research_goals": A string for the research_goals collection.
+      - "todos":         A todo item (each todo is inserted as a separate record).
+
+    For the first three, the document is upserted. For "todos", a new document is inserted.
     """
     db = _get_mongo_db()
     now = datetime.utcnow().isoformat()
@@ -61,7 +60,7 @@ def save_personalization_context(session_id: str, field: str, value: str):
     if field == "profile":
         existing = db["profile"].find_one({"user_id": session_id})
         if existing:
-            # Append new info if not already present.
+            # Append new information if it's not already present.
             current_info = existing.get("info", "")
             if value not in current_info:
                 updated_info = (current_info + " " + value).strip()

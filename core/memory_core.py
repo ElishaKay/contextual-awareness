@@ -1,9 +1,10 @@
+# core/memory_core.py
 """
 Module: core/memory_core.py
 
 This module implements the TemporalMemoryCore class which maintains
-the in-memory session state (emotion trends, intents, topics, and conversation
-turns) and leverages MongoDB (with a Pydantic User model) to store persistent user context.
+in-memory session state and leverages MongoDB (with a Pydantic User model)
+to store persistent user context.
 """
 
 import os
@@ -25,16 +26,7 @@ def _get_mongo_db():
 class TemporalMemoryCore:
     def __init__(self, user_id: str = "default-user"):
         """
-        Initialize the memory core with session state and persistent user context.
-        
-        session_state contains:
-          - "emotion_trends": List of emotions over time.
-          - "intents":        List of recognized intents.
-          - "topics":         List of topics.
-          - "turns":          List of conversation turns.
-          
-        Additionally, the user context document is loaded from MongoDB using
-        the Pydantic User model. If the user record is not found, a default one is created.
+        Initialize session state and persistent user context.
         """
         self.session_state = {
             "emotion_trends": [],
@@ -57,8 +49,8 @@ class TemporalMemoryCore:
 
     def load_user_context(self) -> User:
         """
-        Loads the user context from the "users" collection in MongoDB, returning a User instance.
-        If no document exists for the given user_id, a new User record is created.
+        Loads the user context from MongoDB. If no document exists for the given
+        user_id, a new User record is created.
         """
         try:
             db = _get_mongo_db()
@@ -83,13 +75,9 @@ class TemporalMemoryCore:
         """
         Update the user context stored in MongoDB.
         Accepts keyword arguments corresponding to fields defined in the User model.
-        For example:
+        The "updated_at" field is always refreshed. For example:
         
-            update_user_context(profile={"info": "New profile info"})
-            update_user_context(todos=["Buy milk"])  # to set the todos field
-        
-        The "updated_at" field is always refreshed.
-        After updating, the in-memory user_context is reloaded.
+            update_user_context(profile={"info": "Updated info"}, todos=["Buy milk"])
         """
         try:
             db = _get_mongo_db()
@@ -97,7 +85,7 @@ class TemporalMemoryCore:
             logger.warning("%s Cannot update user context.", e)
             return
 
-        # Ensure updated_at is refreshed
+        # Refresh the updated_at field
         kwargs["updated_at"] = self._get_current_timestamp()
         update_result = db["users"].update_one(
             {"user_id": self.user_id},
@@ -127,8 +115,8 @@ class TemporalMemoryCore:
 
     def to_dict(self):
         """
-        Export the current session state including the user context (converted to dict).
+        Export the current session state including the user context.
         """
         state = self.session_state.copy()
-        state["user_context"] = self.user_context.dict()  # convert Pydantic model to dict
+        state["user_context"] = self.user_context.dict()
         return state
