@@ -1,9 +1,11 @@
 """
 File: examples/mongo_chat.py
 
-This demo illustrates using MongoDB persistence for chat history and
-a MongoDB-backed vector store within the contextual awareness flow.
-Before running, set the following environment variables (e.g., via your shell or .env file):
+This demo now illustrates using MongoDB persistence for chat history,
+a MongoDB-backed vector store, and enhanced personalization logic -
+incorporating user research goals, conversation history, user profile,
+todo list, and instructions.
+Before running, set these environment variables (via your shell or .env file):
     USE_MONGO=true
     MONGO_URI=<your MongoDB connection string>
     USER_ID=<a unique user id>
@@ -17,7 +19,7 @@ from memory.chats.chats import load_chat_history, save_chat_history
 from memory.vectorstore.vectorstore import load_vector_store
 
 def main():
-    # Use environment variables to get the session identifier and whether to use Mongo.
+    # Get session id and whether to use Mongo-based persistence.
     session_id = os.environ.get("USER_ID", "default-user")
     use_mongo = os.environ.get("USE_MONGO", "false").lower() == "true"
 
@@ -25,12 +27,12 @@ def main():
         print("Using MongoDB persistence for chat history.")
         chat_state = load_chat_history(session_id)
     else:
-        # Fallback: initialize with an empty state.
         print("Using default in-memory persistence for chat history.")
         chat_state = {"session_memory": {}, "turns": [], "components": {}}
 
-    # Initialize the pipeline (this is your core conversation processor).
-    pipeline = TCAPipeline(mode="therapist")
+    # Initialize the pipeline.
+    # Note: Pass the session_id to allow personalization context loading.
+    pipeline = TCAPipeline(mode="therapist", session_id=session_id)
     pipeline.load(chat_state)
 
     # Optionally load the vector store.
@@ -43,6 +45,7 @@ def main():
         if user_input.lower() in ("exit", "quit"):
             break
 
+        # Process the user input via the pipeline (which now injects personalization context).
         response = pipeline.process(user_input)
         print("Bot:", response.get("response"))
 
@@ -54,7 +57,6 @@ def main():
                               state.get("turns", []),
                               state.get("components", {}))
         else:
-            # In a real fallback solution you might write the state to a file.
             print("In-memory state updated.")
 
 if __name__ == "__main__":

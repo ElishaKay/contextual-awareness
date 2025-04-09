@@ -105,7 +105,7 @@ async def run_flow():
     vector_store = create_mongo_vector_store()
 
     # Define your research query
-    query = "The best LLM"
+    query = "who is elishakay of the gpt-researcher github repo?"
 
     # Initialize your custom logs handler to stream and save log messages
     custom_logs_handler = CustomLogsHandler(LOGS_COLLECTION)
