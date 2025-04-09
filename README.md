@@ -98,9 +98,8 @@ To be added under the `tests/` folder. Suggested:
 ---
 
 ## 💡 Inspiration
+- [TCA paper: Multi-Turn Manipulation Defense](https://arxiv.org/abs/2503.15560) by Assaf Namer & Prashant Kulkarni
 - [LangGraph long-term memory](https://blog.langchain.dev/launching-long-term-memory-support-in-langgraph/)
-- [TCA paper: Multi-Turn Manipulation Defense](https://arxiv.org/abs/2503.15560) by Prashant Kulkarni & Assaf Namer
-
 ---
 
 ## 🤝 Contributing
