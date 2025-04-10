@@ -58,6 +58,7 @@ def send_message():
 
     # Process the message through the pipeline
     result = pipeline.process(user_input)
+    print(f"Result of pipeline.process in web_chat.py: {result}")
     
     # Update user profile if it contains profile updates
     if 'profile_updates' in result:

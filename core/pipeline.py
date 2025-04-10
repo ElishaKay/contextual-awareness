@@ -118,25 +118,11 @@ class TCAPipeline:
         self.memory_core.append_turn(user_input, response.get("response"))
         self.turns.append({"user": user_input, "bot": response.get("response")})
         
-        # Step 8: Check for profile updates in the response
-        profile_updates = {}
-        if "profile_updates" in response:
-            profile_updates = response["profile_updates"]
-            logger.info(f"Profile updates detected: {json.dumps(profile_updates, indent=2)}")
-            
-            # Update the user profile in memory
-            self.user_profile.update(profile_updates)
-            logger.info(f"Updated user profile: {json.dumps(self.user_profile, indent=2)}")
-            
-            # Add profile updates to the response for external handling
-            response["profile_updates"] = profile_updates
-        
         # Step 9: Update components with extra information if needed.
         self.components = {
             "last_analysis": analysis,
             "pattern": pattern,
-            "memory_core": self.memory_core.to_dict(),
-            "personalization_context": personalization_context
+            "memory_core": self.memory_core.to_dict()
         }
         return response
 
