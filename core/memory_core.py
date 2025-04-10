@@ -61,7 +61,35 @@ class TemporalMemoryCore:
         user_data = db["users"].find_one({"user_id": self.user_id})
         if user_data:
             try:
-                return User(**user_data)
+                # Convert MongoDB document to dict and remove _id field
+                user_dict = dict(user_data)
+                if "_id" in user_dict:
+                    del user_dict["_id"]
+                
+                # Handle nested profile structure
+                if "profile" in user_dict and isinstance(user_dict["profile"], dict):
+                    # If profile has _id, remove it
+                    if "_id" in user_dict["profile"]:
+                        del user_dict["profile"]["_id"]
+                    
+                    # If profile has user_id, remove it (redundant)
+                    if "user_id" in user_dict["profile"]:
+                        del user_dict["profile"]["user_id"]
+                
+                # Ensure all required fields exist
+                if "conversation_summary" not in user_dict:
+                    user_dict["conversation_summary"] = ""
+                if "last_summary_update" not in user_dict:
+                    user_dict["last_summary_update"] = ""
+                if "todos" not in user_dict:
+                    user_dict["todos"] = []
+                if "instructions" not in user_dict:
+                    user_dict["instructions"] = ""
+                if "research_goals" not in user_dict:
+                    user_dict["research_goals"] = ""
+                
+                logger.debug(f"Loaded user context for user_id: {self.user_id}")
+                return User(**user_dict)
             except Exception as e:
                 logger.error("Error parsing user data with Pydantic: %s", e)
                 return User(user_id=self.user_id)
@@ -88,16 +116,34 @@ class TemporalMemoryCore:
         # Refresh the updated_at field
         kwargs["updated_at"] = self._get_current_timestamp()
         
-        # Ensure profile is a dictionary
-        if "profile" in kwargs and not isinstance(kwargs["profile"], dict):
-            kwargs["profile"] = {"info": kwargs["profile"]}
+        # Handle profile updates
+        if "profile" in kwargs:
+            if isinstance(kwargs["profile"], dict):
+                # If profile is a dict, ensure it has the right structure
+                if "info" not in kwargs["profile"] and "info" in self.user_context.profile:
+                    # Preserve existing info if not provided
+                    kwargs["profile"]["info"] = self.user_context.profile["info"]
+            else:
+                # If profile is a string, convert to dict with info field
+                kwargs["profile"] = {"info": kwargs["profile"]}
         
         # Log the update for debugging
         logger.debug(f"Updating user context for user_id: {self.user_id} with data: {kwargs}")
         
+        # Prepare the update document
+        update_doc = {}
+        for key, value in kwargs.items():
+            if key == "profile" and isinstance(value, dict):
+                # For profile, we need to update the nested fields
+                for profile_key, profile_value in value.items():
+                    update_doc[f"profile.{profile_key}"] = profile_value
+            else:
+                update_doc[key] = value
+        
+        # Perform the update
         update_result = db["users"].update_one(
             {"user_id": self.user_id},
-            {"$set": kwargs},
+            {"$set": update_doc},
             upsert=True,
         )
         if update_result.modified_count or update_result.upserted_id:

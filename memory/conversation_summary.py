@@ -71,16 +71,15 @@ def save_conversation_summary(user_id: str, summary: str) -> bool:
     """
     try:
         memory_core = TemporalMemoryCore(user_id)
-        user = memory_core.load_user_context()
         
-        if user:
-            user.conversation_summary = summary
-            user.last_summary_update = datetime.utcnow().isoformat()
-            memory_core.update_user_context(conversation_summary=summary, last_summary_update=datetime.utcnow().isoformat())
-            logger.info(f"Saved conversation summary for user {user_id}")
-            return True
-            
-        return False
+        # Update the conversation summary directly
+        memory_core.update_user_context(
+            conversation_summary=summary,
+            last_summary_update=datetime.utcnow().isoformat()
+        )
+        
+        logger.info(f"Saved conversation summary for user {user_id}")
+        return True
         
     except Exception as e:
         logger.error(f"Error saving conversation summary: {str(e)}")

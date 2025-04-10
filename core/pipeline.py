@@ -118,6 +118,9 @@ class TCAPipeline:
         # Step 4: Load personalization context.
         personalization_context = self.load_personalization_context()
         
+        # Log the personalization context for debugging
+        logger.debug("Personalization context loaded: %s", json.dumps(personalization_context, indent=2, default=str))
+        
         # Ensure that the value for "profile" is always a dictionary.
         profile_db = personalization_context.get("profile", {})
         if isinstance(profile_db, dict):
@@ -183,6 +186,10 @@ class TCAPipeline:
 
         # Get existing conversation summary
         conversation_summary = get_conversation_summary(self.user_id)
+        
+        # Add conversation summary to the response context
+        if conversation_summary:
+            response["conversation_summary"] = conversation_summary
 
         return response
 

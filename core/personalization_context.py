@@ -30,22 +30,38 @@ def fetch_personalization_context(session_id: str) -> dict:
     """
     try:
         db = _get_mongo_db()
-        profile_doc = db["profile"].find_one({"user_id": session_id})
-        # Return profile_doc as a dict if found; otherwise, an empty dict.
-        profile = profile_doc if profile_doc and isinstance(profile_doc, dict) else {}
         
-        todos = list(db["todos"].find({"user_id": session_id}))
-        instructions_doc = db["instructions"].find_one({"user_id": session_id})
-        research_goals_doc = db["research_goals"].find_one({"user_id": session_id})
+        # Fetch the user document from the users collection
+        user_doc = db["users"].find_one({"user_id": session_id})
         
-        context = {
-            "profile": profile,
-            "todos": todos,
-            "instructions": instructions_doc.get("content") if instructions_doc else "",
-            "research_goals": research_goals_doc.get("goals") if research_goals_doc else ""
-        }
-        logger.debug(f"Fetched personalization context for session_id: {session_id}")
-        return context
+        if user_doc:
+            # Extract profile information
+            profile = user_doc.get("profile", {})
+            if isinstance(profile, dict):
+                # If profile is a dict, extract the info field
+                profile_info = profile.get("info", "")
+            else:
+                # If profile is a string, use it directly
+                profile_info = profile
+                
+            # Extract other fields
+            todos = user_doc.get("todos", [])
+            instructions = user_doc.get("instructions", "")
+            research_goals = user_doc.get("research_goals", "")
+            
+            context = {
+                "profile": {"info": profile_info},
+                "todos": todos,
+                "instructions": instructions,
+                "research_goals": research_goals
+            }
+            
+            logger.debug(f"Fetched personalization context for session_id: {session_id}")
+            return context
+        else:
+            logger.debug(f"No user document found for session_id: {session_id}")
+            return {"profile": {}, "todos": [], "instructions": "", "research_goals": ""}
+            
     except Exception as e:
         logger.error(f"Error fetching personalization context: {e}")
         # Return empty context on error
@@ -61,58 +77,74 @@ def save_personalization_context(session_id: str, field: str, value: str):
       - "research_goals": A string for the research_goals collection.
       - "todos":         A todo item (each todo is inserted as a separate record).
 
-    For the first three, the document is upserted. For "todos", a new document is inserted.
+    All data is saved to the users collection.
     """
     try:
         db = _get_mongo_db()
         now = datetime.utcnow().isoformat()
 
+        # Get the current user document
+        user_doc = db["users"].find_one({"user_id": session_id})
+        
         if field == "profile":
-            existing = db["profile"].find_one({"user_id": session_id})
-            if existing:
-                # Append new information if it's not already present.
-                current_info = existing.get("info", "")
+            if user_doc:
+                # Get the current profile
+                current_profile = user_doc.get("profile", {})
+                if isinstance(current_profile, dict):
+                    current_info = current_profile.get("info", "")
+                else:
+                    current_info = current_profile
+                
+                # Append new information if it's not already present
                 if value not in current_info:
                     updated_info = (current_info + " " + value).strip()
-                    db["profile"].update_one(
+                    db["users"].update_one(
                         {"user_id": session_id},
-                        {"$set": {"info": updated_info, "updated_at": now}}
+                        {"$set": {"profile.info": updated_info, "updated_at": now}}
                     )
                     logger.debug(f"Updated profile for session_id: {session_id} with value: {value}")
             else:
-                db["profile"].insert_one({
+                # Create a new user document
+                db["users"].insert_one({
                     "user_id": session_id,
-                    "info": value,
+                    "profile": {"info": value},
                     "created_at": now,
                     "updated_at": now
                 })
                 logger.debug(f"Created new profile for session_id: {session_id} with value: {value}")
-        elif field in ["instructions", "research_goals"]:
-            col = "instructions" if field == "instructions" else "research_goals"
-            field_key = "content" if field == "instructions" else "goals"
-            existing = db[col].find_one({"user_id": session_id})
-            if existing:
-                db[col].update_one(
-                    {"user_id": session_id},
-                    {"$set": {field_key: value, "updated_at": now}}
-                )
-                logger.debug(f"Updated {field} for session_id: {session_id} with value: {value}")
-            else:
-                db[col].insert_one({
-                    "user_id": session_id,
-                    field_key: value,
-                    "created_at": now,
-                    "updated_at": now
-                })
-                logger.debug(f"Created new {field} for session_id: {session_id} with value: {value}")
+        elif field == "instructions":
+            db["users"].update_one(
+                {"user_id": session_id},
+                {"$set": {"instructions": value, "updated_at": now}},
+                upsert=True
+            )
+            logger.debug(f"Updated instructions for session_id: {session_id} with value: {value}")
+        elif field == "research_goals":
+            db["users"].update_one(
+                {"user_id": session_id},
+                {"$set": {"research_goals": value, "updated_at": now}},
+                upsert=True
+            )
+            logger.debug(f"Updated research_goals for session_id: {session_id} with value: {value}")
         elif field == "todos":
-            db["todos"].insert_one({
-                "user_id": session_id,
-                "todo": value,
-                "created_at": now,
-                "updated_at": now
-            })
-            logger.debug(f"Added new todo for session_id: {session_id} with value: {value}")
+            # For todos, we need to append to the existing list
+            if user_doc and "todos" in user_doc:
+                current_todos = user_doc["todos"]
+                if value not in current_todos:
+                    current_todos.append(value)
+                    db["users"].update_one(
+                        {"user_id": session_id},
+                        {"$set": {"todos": current_todos, "updated_at": now}}
+                    )
+                    logger.debug(f"Updated todos for session_id: {session_id} with value: {value}")
+            else:
+                # Create a new user document with the todo
+                db["users"].update_one(
+                    {"user_id": session_id},
+                    {"$set": {"todos": [value], "updated_at": now}},
+                    upsert=True
+                )
+                logger.debug(f"Created new todos for session_id: {session_id} with value: {value}")
         else:
             raise ValueError("Unsupported field for personalization context saving")
     except Exception as e:
