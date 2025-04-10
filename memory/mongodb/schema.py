@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Dict
+from datetime import datetime
 
 class Report(BaseModel):
     report_id: str = Field(..., description="Unique report identifier")
@@ -17,3 +18,12 @@ class Chat(BaseModel):
     chat_id: str = Field(..., description="Unique chat identifier")
     conversation: List[str] = Field(..., description="The conversation log as a list of messages")
     created_at: str = Field(..., description="Timestamp when the conversation was saved")
+
+class User(BaseModel):
+    user_id: str = Field(..., description="Unique identifier for the user")
+    profile: Dict[str, str] = Field(default_factory=dict, description="A dictionary containing user's profile information")
+    todos: List[str] = Field(default_factory=list, description="A list of todo items")
+    instructions: List[str] = Field(default_factory=list, description="User instructions content")
+    research_goals: List[str] = Field(default_factory=list, description="User research goals")
+    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat(), description="Timestamp when the record was created")
+    updated_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat(), description="Timestamp when the record was last updated")

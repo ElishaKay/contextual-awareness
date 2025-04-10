@@ -6,7 +6,8 @@ class TemporalMemoryCore:
             "emotion_trends": [],
             "intents": [],
             "topics": [],
-            "turns": []
+            "turns": [],
+            "personalization": []
         }
 
     def load(self, state_dict):
@@ -17,6 +18,7 @@ class TemporalMemoryCore:
         self.session_state["emotion_trends"].append(analysis.get("emotion"))
         self.session_state["intents"].append(analysis.get("intent"))
         self.session_state["topics"].append(analysis.get("topic"))
+        self.session_state["personalization"].append(analysis.get("personalization"))
         return self.session_state
 
     def append_turn(self, user_input, bot_response):

@@ -24,15 +24,21 @@ class AdaptiveResponseEngine:
             f"Intent: {analysis.get('intent')}\n\n"
             "The following is relevant information from the long-term memory:\n"
             f"{memory_state}\n\n"
-            "And here is the conversation history:\n"
-            f"{self._format_conversation(conversation_history)}\n\n"
-            "Generate a helpful, empathetic, and context-aware response to the most recent user input."
         )
+        
+        # Only include conversation history if it's not empty
+        if conversation_history:
+            prompt += (
+                "And here is the conversation history:\n"
+                f"{self._format_conversation(conversation_history)}\n\n"
+            )
+        
+        prompt += "Generate a helpful, empathetic, and context-aware response to the most recent user input."
 
-        # Call the LLM using a system prompt and the user conversation (you could refine further by separating roles)
+        # Call the LLM using a system prompt and the user conversation
         messages = [
             SystemMessage(content=prompt),
-            HumanMessage(content=conversation_history[-1]["user"])  # most recent user message
+            HumanMessage(content=analysis.get("text", "Hello"))  # Use the analyzed text or default
         ]
         result = self.llm.invoke(messages)
         return {"response": result.content, "mode": "therapist"}
@@ -42,12 +48,17 @@ class AdaptiveResponseEngine:
         prompt = (
             "You are a security monitor for a conversation. "
             "Please analyze the latest user message in the following conversation. \n"
-            f"Conversation history: {self._format_conversation(conversation_history)}\n\n"
-            "Return a response that either warns, blocks, or allows the message based on its risk level."
         )
+        
+        # Only include conversation history if it's not empty
+        if conversation_history:
+            prompt += f"Conversation history: {self._format_conversation(conversation_history)}\n\n"
+        
+        prompt += "Return a response that either warns, blocks, or allows the message based on its risk level."
+        
         messages = [
             SystemMessage(content=prompt),
-            HumanMessage(content=conversation_history[-1]["user"]) 
+            HumanMessage(content=analysis.get("text", "Hello"))  # Use the analyzed text or default
         ]
         result = self.llm.invoke(messages)
         # For simplicity, assume the system returns an object with a key "response"
