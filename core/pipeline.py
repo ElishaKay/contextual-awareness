@@ -6,6 +6,7 @@ from pymongo import MongoClient
 
 # Import our personalization module
 from core.personalization_context import fetch_personalization_context, save_personalization_context
+from memory.memory_store import load_user_memory, save_user_memory
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -30,12 +31,17 @@ class TCAPipeline:
 
         self.mode = mode
         self.session_id = session_id
+        self.user_id = os.environ.get("USER_ID", session_id)
         self.memory_core = TemporalMemoryCore(user_id=self.session_id)
-        self.meaning_engine = ContextualMeaningEngine(mode)
+        self.meaning_engine = ContextualMeaningEngine(mode, user_id=self.user_id)
         self.pattern_tracker = PatternShiftTracker()
         self.response_engine = AdaptiveResponseEngine(mode)
         self.turns = []  # Conversation history.
         self.components = {}
+        
+        # Load user memory from the memory store
+        self.user_memory = load_user_memory(self.user_id)
+        logger.debug(f"Loaded user memory for user_id: {self.user_id}")
 
     def load(self, checkpoint_state: dict):
         """
@@ -116,21 +122,34 @@ class TCAPipeline:
         augmented_analysis = analysis.copy()
         augmented_analysis["personalization_context"] = personalization_context
 
+        # Step 7: Generate response
         response = self.response_engine.decide(augmented_analysis,
                                                self.memory_core.to_dict(),
                                                conversation_history)
         logger.debug("Adaptive response: %s", json.dumps({"adaptive_response": response}, indent=2, default=str))
         
-        # Step 7: Update persistent memory.
+        # Step 8: Update persistent memory.
         self.memory_core.append_turn(user_input, response.get("response"))
         self.turns.append({"user": user_input, "bot": response.get("response")})
         
+        # Step 9: Update components
         self.components = {
             "last_analysis": analysis,
             "pattern": pattern,
             "memory_core": self.memory_core.to_dict(),
             "personalization_context": personalization_context
         }
+        
+        # Step 10: Save user memory
+        self.user_memory.update({
+            "last_interaction": {
+                "input": user_input,
+                "response": response.get("response"),
+                "timestamp": analysis.get("timestamp", "")
+            }
+        })
+        save_user_memory(self.user_id, self.user_memory)
+        
         return response
 
     def to_dict(self) -> dict:
