@@ -56,7 +56,7 @@ class LangGraphMemoryAdapter:
         
         if USE_MONGO and mongo_db is not None:
             # Save to MongoDB
-            mongo_db["langgraph_checkpoints"].update_one(
+            mongo_db["chats"].update_one(
                 {"user_id": user_id},
                 {"$set": state_dict},
                 upsert=True
@@ -87,7 +87,7 @@ class LangGraphMemoryAdapter:
             
         if USE_MONGO and mongo_db is not None:
             # Load from MongoDB
-            checkpoint = mongo_db["langgraph_checkpoints"].find_one({"user_id": user_id})
+            checkpoint = mongo_db["chats"].find_one({"user_id": user_id})
             if checkpoint:
                 # Remove MongoDB _id field
                 if "_id" in checkpoint:

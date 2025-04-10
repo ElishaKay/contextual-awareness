@@ -229,18 +229,6 @@ def update_user_profile(user_id: Optional[str] = None, profile_data: Optional[Di
                 upsert=True
             )
             
-            # Update the langgraph checkpoints collection
-            mongo_db["langgraph_checkpoints"].update_one(
-                {"user_id": user_id},
-                {
-                    "$set": {
-                        "session_memory.user_profile": current_profile,
-                        "updated_at": datetime.utcnow().isoformat()
-                    }
-                },
-                upsert=True
-            )
-            
             print(f"Updated profile for user {user_id} in all collections")
         except Exception as e:
             print(f"Error updating profile in MongoDB: {e}")
