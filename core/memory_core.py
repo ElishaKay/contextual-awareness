@@ -87,6 +87,14 @@ class TemporalMemoryCore:
 
         # Refresh the updated_at field
         kwargs["updated_at"] = self._get_current_timestamp()
+        
+        # Ensure profile is a dictionary
+        if "profile" in kwargs and not isinstance(kwargs["profile"], dict):
+            kwargs["profile"] = {"info": kwargs["profile"]}
+        
+        # Log the update for debugging
+        logger.debug(f"Updating user context for user_id: {self.user_id} with data: {kwargs}")
+        
         update_result = db["users"].update_one(
             {"user_id": self.user_id},
             {"$set": kwargs},
@@ -96,12 +104,18 @@ class TemporalMemoryCore:
             logger.debug("User context updated for user_id: %s", self.user_id)
         else:
             logger.debug("No changes made to the user context for user_id: %s", self.user_id)
+        
+        # Reload the user context to ensure we have the latest data
         self.user_context = self.load_user_context()
 
     def update(self, analysis, pattern):
         """
         Update the transient session state based on analysis and pattern info.
         """
+        # Add timestamp to the analysis
+        if "timestamp" not in analysis:
+            analysis["timestamp"] = self._get_current_timestamp()
+            
         self.session_state["emotion_trends"].append(analysis.get("emotion"))
         self.session_state["intents"].append(analysis.get("intent"))
         self.session_state["topics"].append(analysis.get("topic"))

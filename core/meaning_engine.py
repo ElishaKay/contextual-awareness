@@ -3,6 +3,7 @@ import logging
 from plugins.therapist.plugin import analyze_therapist_context
 from plugins.security.plugin import analyze_security_context
 from memory.memory_store import update_user_profile
+from core.personalization_context import save_personalization_context
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +58,12 @@ class ContextualMeaningEngine:
             
             # Update the user profile with the extracted information
             update_user_profile(self.user_id, personal_info)
+            
+            # Also save to personalization context
+            # Extract the key information from the user input
+            # For example, if user says "I like pants", we want to save "I like pants"
+            # If user says "My name is John", we want to save "My name is John"
+            save_personalization_context(self.user_id, "profile", user_input)
             
             # Add a flag to the analysis indicating personal info was detected
             analysis["contains_personal_info"] = True

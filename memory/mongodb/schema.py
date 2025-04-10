@@ -25,5 +25,7 @@ class User(BaseModel):
     todos: List[str] = Field(default_factory=list, description="A list of todo items")
     instructions: str = Field("", description="User instructions content")
     research_goals: str = Field("", description="User research goals")
+    conversation_summary: str = Field("", description="Summary of previous conversations with the user")
+    last_summary_update: str = Field("", description="Timestamp when the conversation summary was last updated")
     created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat(), description="Timestamp when the record was created")
     updated_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat(), description="Timestamp when the record was last updated")

@@ -3,10 +3,15 @@ import os
 import json
 import logging
 from pymongo import MongoClient
+from typing import Dict, List, Optional
+from datetime import datetime
 
 # Import our personalization module
 from core.personalization_context import fetch_personalization_context, save_personalization_context
 from memory.memory_store import load_user_memory, save_user_memory
+from core.meaning_engine import ContextualMeaningEngine
+from memory.conversation_summary import generate_conversation_summary, save_conversation_summary, get_conversation_summary
+from memory.mongodb.schema import User
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -25,7 +30,6 @@ class TCAPipeline:
         The session_id will be used for the persistent user record.
         """
         from core.memory_core import TemporalMemoryCore
-        from core.meaning_engine import ContextualMeaningEngine
         from core.pattern_tracker import PatternShiftTracker
         from core.response_engine import AdaptiveResponseEngine
 
@@ -42,6 +46,9 @@ class TCAPipeline:
         # Load user memory from the memory store
         self.user_memory = load_user_memory(self.user_id)
         logger.debug(f"Loaded user memory for user_id: {self.user_id}")
+
+        self.conversation_history = []
+        self.last_summary_update = None
 
     def load(self, checkpoint_state: dict):
         """
@@ -83,15 +90,30 @@ class TCAPipeline:
         
         # (Optional) Check if the user wants to update their profile.
         lower_input = user_input.lower()
-        if "save in my profile" in lower_input:
+        if "save in my profile" in lower_input or "save that" in lower_input:
+            info_to_save = ""
             if "that" in lower_input:
                 # Extract the text after "that"
                 _, _, info_to_save = lower_input.partition("that")
                 info_to_save = info_to_save.strip()
-                if info_to_save:
-                    # Save the info to the dedicated personalization store.
-                    save_personalization_context(self.session_id, "profile", info_to_save)
-                    logger.debug("Saved profile info: %s", info_to_save)
+            elif "save in my profile" in lower_input:
+                # Extract the text after "save in my profile"
+                _, _, info_to_save = lower_input.partition("save in my profile")
+                info_to_save = info_to_save.strip()
+                
+            if info_to_save:
+                # Save the info to the dedicated personalization store.
+                save_personalization_context(self.session_id, "profile", info_to_save)
+                logger.debug("Saved profile info: %s", info_to_save)
+                
+                # Also update the user memory
+                if "profile" not in self.user_memory:
+                    self.user_memory["profile"] = {}
+                
+                # Add the new information to the profile
+                self.user_memory["profile"]["info"] = info_to_save
+                save_user_memory(self.user_id, self.user_memory)
+                logger.debug("Updated user memory with profile info: %s", info_to_save)
         
         # Step 4: Load personalization context.
         personalization_context = self.load_personalization_context()
@@ -150,6 +172,18 @@ class TCAPipeline:
         })
         save_user_memory(self.user_id, self.user_memory)
         
+        # Add user input to conversation history
+        self.conversation_history.append({"role": "user", "content": user_input})
+
+        # Check if we need to generate a new summary (every 10 messages)
+        if len(self.conversation_history) % 10 == 0:
+            summary = generate_conversation_summary(self.conversation_history, self.user_id)
+            save_conversation_summary(self.user_id, summary)
+            self.last_summary_update = datetime.utcnow().isoformat()
+
+        # Get existing conversation summary
+        conversation_summary = get_conversation_summary(self.user_id)
+
         return response
 
     def to_dict(self) -> dict:
@@ -161,3 +195,12 @@ class TCAPipeline:
             "turns": self.turns,
             "components": self.components,
         }
+
+    def get_conversation_history(self) -> List[Dict[str, str]]:
+        return self.conversation_history
+
+    def get_user_profile(self) -> Dict[str, str]:
+        return self.user_memory.get("profile", {})
+
+    def get_conversation_summary(self) -> str:
+        return get_conversation_summary(self.user_id)
