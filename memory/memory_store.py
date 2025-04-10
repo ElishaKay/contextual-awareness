@@ -152,27 +152,6 @@ def save_user_memory(user_id: Optional[str] = None, data: Optional[Dict[str, Any
             upsert=True
         )
         
-        # Save to other collections
-        if "todos" in data:
-            # Delete existing todos and insert new ones
-            mongo_db["todos"].delete_many({"user_id": user_id})
-            if data["todos"]:
-                mongo_db["todos"].insert_many(data["todos"])
-        
-        if "instructions" in data:
-            mongo_db["instructions"].update_one(
-                {"user_id": user_id},
-                {"$set": {"content": data["instructions"]}},
-                upsert=True
-            )
-        
-        if "research_goals" in data:
-            mongo_db["research_goals"].update_one(
-                {"user_id": user_id},
-                {"$set": {"content": data["research_goals"]}},
-                upsert=True
-            )
-        
         print(f"User memory saved to MongoDB for user {user_id}")
     else:
         # Save to local file
