@@ -9,6 +9,7 @@ sys.path.append(project_root)
 from flask import Flask, render_template, request, jsonify
 from core.pipeline import TCAPipeline
 from memory.langraph_adapter import LangGraphMemoryAdapter
+from memory.memory_store import get_user_id, load_user_memory, save_user_memory, get_user_profile
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -17,11 +18,25 @@ load_dotenv()
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 app = Flask(__name__, template_folder=template_dir)
 
-user_id = "web_user"
+# Get user ID from environment variable or use default
+user_id = get_user_id()
 mode = "therapist"
 
-# Initialize pipeline
+# Initialize pipeline with user profile data
+user_profile = get_user_profile(user_id)
 prior_state = LangGraphMemoryAdapter.load_checkpoint(user_id)
+
+# If no prior state exists, create a new one with user profile data
+if not prior_state:
+    prior_state = {
+        "session_memory": {
+            "user_profile": user_profile,
+            "last_interaction": None
+        },
+        "turns": [],
+        "components": {}
+    }
+
 pipeline = TCAPipeline(mode)
 pipeline.load(prior_state)
 
@@ -35,6 +50,7 @@ def send_message():
     if not user_input:
         return jsonify({'error': 'No message provided'}), 400
 
+    # Process the message through the pipeline
     result = pipeline.process(user_input)
     
     # Save updated memory
