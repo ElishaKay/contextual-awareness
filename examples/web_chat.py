@@ -9,7 +9,13 @@ sys.path.append(project_root)
 from flask import Flask, render_template, request, jsonify
 from core.pipeline import TCAPipeline
 from memory.langraph_adapter import LangGraphMemoryAdapter
-from memory.memory_store import get_user_id, load_user_memory, save_user_memory, get_user_profile
+from memory.memory_store import (
+    get_user_id, 
+    load_user_memory, 
+    save_user_memory, 
+    get_user_profile,
+    update_user_profile
+)
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -53,6 +59,15 @@ def send_message():
     # Process the message through the pipeline
     result = pipeline.process(user_input)
     
+    # Update user profile if it contains profile updates
+    if 'profile_updates' in result:
+        try:
+            # Update the user profile in MongoDB
+            update_user_profile(user_id, result['profile_updates'])
+            print(f"Updated profile for user {user_id}: {result['profile_updates']}")
+        except Exception as e:
+            print(f"Error updating profile: {e}")
+    
     # Save updated memory
     LangGraphMemoryAdapter.save_checkpoint(user_id, pipeline.to_dict())
     
@@ -60,6 +75,26 @@ def send_message():
         'response': result['response'],
         'timestamp': result.get('timestamp', '')
     })
+
+@app.route('/update_profile', methods=['POST'])
+def update_profile():
+    profile_data = request.json.get('profile', {})
+    if not profile_data:
+        return jsonify({'error': 'No profile data provided'}), 400
+        
+    try:
+        # Update the user profile in MongoDB
+        update_user_profile(user_id, profile_data)
+        
+        # Also update the pipeline's user profile
+        pipeline.user_profile.update(profile_data)
+        
+        # Save the updated state
+        LangGraphMemoryAdapter.save_checkpoint(user_id, pipeline.to_dict())
+        
+        return jsonify({'status': 'success', 'message': 'Profile updated successfully'})
+    except Exception as e:
+        return jsonify({'error': f'Failed to update profile: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True) 

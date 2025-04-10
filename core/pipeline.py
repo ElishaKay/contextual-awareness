@@ -30,6 +30,7 @@ class TCAPipeline:
         self.response_engine = AdaptiveResponseEngine(mode)
         self.turns = []  # Conversation history
         self.components = {}  # Extra components state
+        self.user_profile = {}  # User profile data
 
     def load(self, checkpoint_state: dict):
         """
@@ -39,6 +40,11 @@ class TCAPipeline:
         self.memory_core.load(checkpoint_state.get("session_memory", {}))
         self.turns = checkpoint_state.get("turns", [])
         self.components = checkpoint_state.get("components", {})
+        
+        # Load user profile from session memory if available
+        if "session_memory" in checkpoint_state and "user_profile" in checkpoint_state["session_memory"]:
+            self.user_profile = checkpoint_state["session_memory"]["user_profile"]
+            logger.info(f"Loaded user profile: {json.dumps(self.user_profile, indent=2)}")
 
         # Use default=str in json.dumps to automatically convert non-serializable types 
         logger.debug("Loaded checkpoint state: %s", 
@@ -112,7 +118,20 @@ class TCAPipeline:
         self.memory_core.append_turn(user_input, response.get("response"))
         self.turns.append({"user": user_input, "bot": response.get("response")})
         
-        # Update components with extra information if needed.
+        # Step 8: Check for profile updates in the response
+        profile_updates = {}
+        if "profile_updates" in response:
+            profile_updates = response["profile_updates"]
+            logger.info(f"Profile updates detected: {json.dumps(profile_updates, indent=2)}")
+            
+            # Update the user profile in memory
+            self.user_profile.update(profile_updates)
+            logger.info(f"Updated user profile: {json.dumps(self.user_profile, indent=2)}")
+            
+            # Add profile updates to the response for external handling
+            response["profile_updates"] = profile_updates
+        
+        # Step 9: Update components with extra information if needed.
         self.components = {
             "last_analysis": analysis,
             "pattern": pattern,
@@ -125,8 +144,12 @@ class TCAPipeline:
         """
         Export the current state of the pipeline.
         """
+        # Ensure user_profile is included in session_memory
+        session_memory = self.memory_core.to_dict()
+        session_memory["user_profile"] = self.user_profile
+        
         return {
-            "session_memory": self.memory_core.to_dict(),
+            "session_memory": session_memory,
             "turns": self.turns,
             "components": self.components,
         }
