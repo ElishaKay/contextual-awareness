@@ -1,9 +1,9 @@
-langgraph
-langchain-core
-langchain-community
-langchain-openai
-trustcall
+flask==3.0.0
+python-dotenv==1.0.0
+langchain==0.1.0
+langchain-openai==0.0.2
+pymongo==4.6.1
 
 # gptr mongo flow
 gpt_researcher
-pymongo
+flask
