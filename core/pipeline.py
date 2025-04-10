@@ -4,6 +4,13 @@ import json
 import logging
 from pymongo import MongoClient
 from bson import ObjectId  # Import ObjectId if needed
+from memory.memory_store import (
+    get_user_id, 
+    load_user_memory, 
+    save_user_memory, 
+    get_user_profile,
+    update_user_profile
+)
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -107,6 +114,9 @@ class TCAPipeline:
         # Step 7: Update persistent memory and conversation turns.
         self.memory_core.append_turn(user_input, response.get("response"))
         self.turns.append({"user": user_input, "bot": response.get("response")})
+        
+        # Step 8: Update user profile if it contains profile updates
+        update_user_profile(self.session_id, analysis)
         
         # Step 9: Update components with extra information if needed.
         self.components = {
