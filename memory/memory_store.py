@@ -99,19 +99,10 @@ def load_user_memory(user_id: Optional[str] = None) -> Dict[str, Any]:
     if USE_MONGO and mongo_db is not None:
         # Get or create user document
         user = get_or_create_user(user_id)
-        
-        # Load related collections
-        todos = list(mongo_db["todos"].find({"user_id": user_id}))
-        instructions = mongo_db["instructions"].find_one({"user_id": user_id})
-        research_goals = mongo_db["research_goals"].find_one({"user_id": user_id})
-        
+                
         # Combine into a single memory object
         memory_data = {
             "profile": user.get("profile", {}),
-            "preferences": user.get("preferences", {}),
-            "todos": todos,
-            "instructions": instructions.get("content") if instructions else "",
-            "research_goals": research_goals.get("content") if research_goals else "",
             "last_updated": datetime.utcnow().isoformat()
         }
         

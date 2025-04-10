@@ -64,19 +64,9 @@ class TCAPipeline:
         session_id = self.session_id
 
         # Retrieve personalization data.
-        profile = db["profile"].find_one({"user_id": session_id})
-        todos = list(db["todos"].find({"user_id": session_id}))
-        instructions_doc = db["instructions"].find_one({"user_id": session_id})
-        research_goals_doc = db["research_goals"].find_one({"user_id": session_id})
-
-        personalization_context = {
-            "profile": profile if profile else {},
-            "todos": todos,
-            "instructions": instructions_doc.get("content") if instructions_doc else "",
-            "research_goals": research_goals_doc.get("goals") if research_goals_doc else ""
-        }
-        logger.debug("Personalization context loaded: %s", json.dumps(personalization_context, indent=2, default=str))
-        return personalization_context
+        profile = db["users"].find_one({"user_id": session_id})
+        logger.debug("Personalization context loaded: %s", json.dumps(profile, indent=2, default=str))
+        return profile
 
     def process(self, user_input: str) -> dict:
         """

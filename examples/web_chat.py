@@ -58,16 +58,6 @@ def send_message():
 
     # Process the message through the pipeline
     result = pipeline.process(user_input)
-    print(f"Result of pipeline.process in web_chat.py: {result}")
-    
-    # Update user profile if it contains profile updates
-    if 'profile_updates' in result:
-        try:
-            # Update the user profile in MongoDB
-            update_user_profile(user_id, result['profile_updates'])
-            print(f"Updated profile for user {user_id}: {result['profile_updates']}")
-        except Exception as e:
-            print(f"Error updating profile: {e}")
     
     # Save updated memory
     LangGraphMemoryAdapter.save_checkpoint(user_id, pipeline.to_dict())
