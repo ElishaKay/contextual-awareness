@@ -57,15 +57,13 @@ def get_or_create_user(user_id: Optional[str] = None) -> Dict[str, Any]:
                 "user_id": user_id,
                 "created_at": datetime.utcnow(),
                 "last_active": datetime.utcnow(),
-                "profile": {},
-                "preferences": {},
-                "conversation_history": []
+                "profile": {}
             }
             mongo_db["users"].insert_one(user)
             print(f"Created new user document for {user_id}")
         return user
     else:
-        return {"user_id": user_id, "profile": {}, "preferences": {}, "conversation_history": []}
+        return {"user_id": user_id, "profile": {}}
 
 def update_user_activity(user_id: Optional[str] = None) -> None:
     """
@@ -134,7 +132,6 @@ def save_user_memory(user_id: Optional[str] = None, data: Optional[Dict[str, Any
         # Update user document
         user_update = {
             "profile": data.get("profile", {}),
-            "preferences": data.get("preferences", {}),
             "last_active": datetime.utcnow()
         }
         mongo_db["users"].update_one(
@@ -192,16 +189,23 @@ def update_user_profile(user_id: Optional[str] = None, profile_data: Optional[Di
             # Get existing user document or create new one
             user = get_or_create_user(user_id)
             
-            # Update the profile data
-            current_profile = user.get("profile", {})
-            current_profile.update(profile_data)
+            # Get the current profile array or create new one if it doesn't exist
+            user_profile_history = user.get("profile_history", [])
             
-            # Update the user document with new profile data
+            # Create a new profile entry with timestamp
+            profile_entry = {
+                "timestamp": datetime.utcnow(),
+                "data": profile_data
+            }
+            
+            # Append the new profile entry to history
             mongo_db["users"].update_one(
                 {"user_id": user_id},
                 {
+                    "$push": {
+                        "profile_history": profile_entry
+                    },
                     "$set": {
-                        "profile": current_profile,
                         "last_active": datetime.utcnow()
                     }
                 },
@@ -213,7 +217,7 @@ def update_user_profile(user_id: Optional[str] = None, profile_data: Optional[Di
                 {"user_id": user_id},
                 {
                     "$set": {
-                        "user_profile": current_profile,
+                        "user_profile": profile_entry,
                         "updated_at": datetime.utcnow().isoformat()
                     }
                 },
